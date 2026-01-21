@@ -1,0 +1,157 @@
+---
+title: "Creating HMM Model"
+---
+This code creates a HMM model that represents a given diagram based on a practice problem.
+There are two protein families that each have a different set of parameters for their emission and transition states. I will find the most likely sequence of hidden states for each family. In addition, given a sequence of observations, I will also find the likely family that would have generated those observations and find the possible sequence of hidden states with the Viterbi algorithm.
+
+There are 3 states, rectangle, circle, and hexagons
+Each state can emit a symbol: a,b,c,d,e.
+Each iteration starts with R1 and ends with R3
+
+```{r}
+library(HMM)
+states <- c("R1","C1","H1","R2","C2","H2","R3") # hidden states
+symbols <- c("a", "b", "c", "d", "e") # emission symbols
+```
+
+```{r}
+# for proteins of Family 1
+
+# emission matrix columns are a-e, and rows are H1,C1,R1, H2,C2,R2,R3
+emissionF1 <- matrix(c(0.05,0.3,0.3,0.3,0.05,
+                       0.8,0.05,0.05,0.05,0.05,
+                       0.05,0.05,0.05,0.05,0.8,
+                       0.05,0.3,0.3,0.3,0.05,
+                       0.8,0.05,0.05,0.05,0.05,
+                       0.05,0.05,0.05,0.05,0.8,
+                       0.05,0.3,0.3,0.3,0.05
+                       ), nrow = 7, ncol = 5, byrow=TRUE, dimnames=list(states,symbols))
+
+# transition matrix for family 1
+transF1 <- matrix(c(0,0.4,0.1,0.5,0,0,0,
+                    0,0.1,0.2,0.7,0,0,0,
+                    0,0,0.3,0.7,0,0,0,
+                    0,0,0,0,0.4,0.1,0.5,
+                    0,0,0,0,0.1,0.2,0.7,
+                    0,0,0,0,0,0.3,0.7,
+                    0,0,0,0,0,0,1), 
+                  nrow = 7, ncol =7, byrow=TRUE, dimnames=list(states,states))
+
+# make sure that R1 is the start every iteration
+startprob <- matrix(c(1,0,0,0,0,0,0), nrow = 1, ncol = 7, byrow = TRUE, dimnames= list("pi",states))
+
+# initialize the HMMM model
+lambda1 <- initHMM(States = states,
+               Symbols = symbols,
+               startProbs = startprob,
+               transProbs = transF1,
+               emissionProbs = emissionF1)
+```
+
+```{r}
+# for proteins of Family 2
+
+# emission matrix columns are a-e, and rows are H1,C1,R1, H2,C2,R2,R3
+emissionF2 <- matrix(c(0.2,0.2,0.2,0.2,0.2,
+                       0.2,0.2,0.2,0.2,0.2,
+                       0.2,0.2,0.2,0.2,0.2,
+                       0.2,0.2,0.2,0.2,0.2,
+                       0.2,0.2,0.2,0.2,0.2,
+                       0.2,0.2,0.2,0.2,0.2,
+                       0.2,0.2,0.2,0.2,0.2
+                       ), nrow = 7, ncol = 5, byrow=TRUE, dimnames=list(states,symbols))
+
+# transition matrix for Family 2
+transF2 <- matrix(c(0,(1/3),(1/3),(1/3),0,0,0,
+                    0,(1/3),(1/3),(1/3),0,0,0,
+                    0,0,0.5,0.5,0,0,0,
+                    0,0,0,0,(1/3),(1/3),(1/3),
+                    0,0,0,0,(1/3),(1/3),(1/3),
+                    0,0,0,0,0,0.5,0.5,
+                    0,0,0,0,0,0,1), 
+                  nrow = 7, ncol =7, byrow=TRUE, dimnames=list(states,states))
+
+# make sure that R1 is the start every iteration
+startprob <- matrix(c(1,0,0,0,0,0,0), nrow = 1, ncol = 7, byrow = TRUE, dimnames= list("pi",states))
+
+# initialize the HMMM model
+lambda2 <- initHMM(States = states,
+               Symbols = symbols,
+               startProbs = startprob,
+               transProbs = transF2,
+               emissionProbs = emissionF2)
+
+```
+
+Below simulates 3 sequences of hidden states for each protein family 1 and 2 with a length of 20 observations.
+```{r}
+print("Family 1:")
+O_F1 = simHMM(lambda1, 20)#$observation
+O_F1$states[1:which(O_F1$states=="R3")[1]]
+O_F1 = simHMM(lambda1, 20)#$observation
+O_F1$states[1:which(O_F1$states=="R3")[1]]
+O_F1 = simHMM(lambda1, 20)#$observation
+O_F1$states[1:which(O_F1$states=="R3")[1]]
+
+print("Family 2:")
+O_F2 = simHMM(lambda2,20)#$observation
+O_F2$states[1:which(O_F2$states=="R3")[1]]
+O_F2 = simHMM(lambda2,20)#$observation
+O_F2$states[1:which(O_F2$states=="R3")[1]]
+O_F2 = simHMM(lambda2,20)#$observation
+O_F2$states[1:which(O_F2$states=="R3")[1]]
+```
+Here below, I make sure the seed is constant to provide the same output for each run of the code. But here I make 3 iterations of simulating the HMM with a length of 20 observations.
+```{r}
+set.seed(10)
+
+# 1st iteration
+print("First Iteration")
+print("Family 1:")
+O_F1 = simHMM(lambda1, 20)#$observation
+O_F1$states[1:which(O_F1$states=="R3")[1]]
+print("Family 2:")
+O_F2 = simHMM(lambda2,20)#$observation
+O_F2$states[1:which(O_F2$states=="R3")[1]]
+print(" ")
+
+# 2nd iteration
+print("Second Iteration")
+print("Family 1:")
+O_F1 = simHMM(lambda1, 20)#$observation
+O_F1$states[1:which(O_F1$states=="R3")[1]]
+print("Family 2:")
+O_F2 = simHMM(lambda2,20)#$observation
+O_F2$states[1:which(O_F2$states=="R3")[1]]
+print(" ")
+
+
+# 3rd iteration
+print("Third Iteration")
+print("Family 1:")
+O_F1 = simHMM(lambda1, 20)#$observation
+O_F1$states[1:which(O_F1$states=="R3")[1]]
+print("Family 2:")
+O_F2 = simHMM(lambda2,20)#$observation
+O_F2$states[1:which(O_F2$states=="R3")[1]]
+```
+
+Given a sequence of observations:"c", "a", "c", "a", "e", "b", I will use the Forward Algorithm to find from which protein family this sequence is most likely. Family 1 here gives us a higher probabilty: 0.0003323381.
+```{r}
+outputs <- c("c", "a", "c", "a", "e", "b")
+fam1 <- exp(forward(lambda1, outputs))
+print("Under Family 1:")
+sum(fam1[,6])
+
+fam2 <- exp(forward(lambda2, outputs))
+print("Under Family 2:")
+sum(fam2[,6])
+```
+
+Now, given the sequence of observations above, I will use the Viterbi algorithm to find the most likely sequence of hidden states that led to this outputs under Family 1.
+```{r}
+outputs <- c("c", "a", "c", "a", "e", "b")
+print("Under Family 1:")
+viterbi(lambda1, outputs)
+```
+
